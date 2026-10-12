@@ -1,0 +1,15 @@
+# Local MongoDB for development: `npm run db:up` / `npm run db:down`
+# Data persists in the named volume between restarts.
+services:
+  mongo:
+    image: mongo:8
+    container_name: gemini-chat-mongo
+    restart: unless-stopped
+    ports:
+      # Bound to localhost only: this instance has no auth, so keep it off the network
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

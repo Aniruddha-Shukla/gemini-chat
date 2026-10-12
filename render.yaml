@@ -1,0 +1,38 @@
+# Render Blueprint for the API. In the Render dashboard: New → Blueprint → pick this repo.
+# Values marked `sync: false` are asked for once, when the Blueprint is first created.
+services:
+  - type: web
+    name: gemini-chat-api
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci --workspace server
+    startCommand: npm start --workspace server
+    healthCheckPath: /api/health
+    # Only redeploy when server code or dependencies change (not on frontend-only commits).
+    buildFilter:
+      paths:
+        - server/**
+        - package.json
+        - package-lock.json
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      # Render runs behind one proxy; lets rate limiting see real client IPs.
+      - key: TRUST_PROXY
+        value: "1"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash
+      # Secrets / deployment-specific values: entered in the dashboard, never committed.
+      - key: MONGODB_URI
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CLIENT_URL
+        sync: false

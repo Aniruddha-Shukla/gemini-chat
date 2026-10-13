@@ -18,5 +18,8 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.11.2"
+  },
+  "devDependencies": {
+    "mongodb-memory-server-core": "^11.3.0"
   }
 }

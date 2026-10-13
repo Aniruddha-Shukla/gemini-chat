@@ -10,6 +10,9 @@ node_modules/
 dist/
 coverage/
 
+# Built-in local MongoDB data (development only)
+server/.data/
+
 # OS / editor / logs
 .DS_Store
 *.log

@@ -10,26 +10,38 @@ A full-stack AI chat app: React (Vite + Tailwind) on the front, Express + MongoD
 
 ## Quick start
 
-Requirements: Node.js 20.11+, and either Docker (for local MongoDB) or a MongoDB Atlas URI.
+Requirements:
+- **Node.js 22.12+** (the current LTS is recommended) and Git
+- A **Gemini API key**: free at https://aistudio.google.com/apikey
+- Internet access on the first run (the built-in database downloads MongoDB once, ~77 MB)
+
+No database to install: in development the server starts its own MongoDB automatically.
+
+**1. Install dependencies** (client + server in one go, via npm workspaces)
 
 ```bash
-npm install          # installs client + server (npm workspaces)
-npm run db:up        # starts MongoDB in Docker on 127.0.0.1:27017
+npm install
 ```
 
-Add your Gemini API key (get one at https://aistudio.google.com/apikey) to `server/.env`:
-
-```ini
-GEMINI_API_KEY=your-key-here
-```
-
-Then:
+**2. Create `server/.env`** (`.env` files are not in the repo; this copies the template and generates `JWT_SECRET`)
 
 ```bash
-npm run dev          # API on :4000 and the React app on :5173
+npm run setup
+```
+
+Then open `server/.env` and paste your key after `GEMINI_API_KEY=`.
+
+**3. Run the app**
+
+```bash
+npm run dev          # local MongoDB + API on :4000 + React app on :5173
 ```
 
 Open http://localhost:5173 and create an account.
+
+- Local data is stored in `server/.data/db` (git-ignored) and persists between runs. Delete that folder to start fresh.
+- To use MongoDB Atlas (or any other MongoDB) instead, set `MONGODB_URI` in `server/.env`.
+- `client/.env` is optional; without it the app uses `/api`, which Vite proxies to the API.
 
 > The server starts without a Gemini key, so you can sign up and look around first; sending a message shows "Gemini is not configured yet" until the key is added. Restart `npm run dev` after editing `.env`.
 
@@ -41,8 +53,8 @@ Open http://localhost:5173 and create an account.
 |---|---|---|---|
 | `GEMINI_API_KEY` | for chat | — | Server-side only; never sent to the browser |
 | `GEMINI_MODEL` | | `gemini-3.8-flash` | Any Gemini model id, e.g. `gemini-flash-latest` |
-| `MONGODB_URI` | yes | — | `mongodb://127.0.0.1:27017/gemini-chat` for the Docker DB, or an Atlas `mongodb+srv://…` URI |
-| `JWT_SECRET` | yes | — | Long random string (≥ 32 chars in production). Generate: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
+| `MONGODB_URI` | in production | *(empty)* | Empty in development = built-in local MongoDB. Otherwise any MongoDB URI, e.g. Atlas `mongodb+srv://…/gemini-chat` |
+| `JWT_SECRET` | yes | — | Long random string (≥ 32 chars in production). `npm run setup` generates one, or: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
 | `JWT_EXPIRES_IN` | | `7d` | How long a login lasts |
 | `PORT` | | `4000` | Avoid 5000 on macOS (AirPlay uses it) |
 | `CLIENT_URL` | | `http://localhost:5173` | Allowed CORS origin(s), comma-separated |
@@ -61,9 +73,9 @@ Both `.env` files are git-ignored; the `.env.example` files are the templates.
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | API (auto-restarts on change) + Vite dev server together |
+| `npm run setup` | Create `server/.env` from the template with a generated `JWT_SECRET` (skips if it exists) |
+| `npm run dev` | API (auto-restarts on change, starts the local MongoDB) + Vite dev server together |
 | `npm run dev:server` / `npm run dev:client` | Run one side only |
-| `npm run db:up` / `npm run db:down` | Start / stop the local MongoDB container (data is kept in a Docker volume) |
 | `npm run build` | Build the React app into `client/dist` |
 | `npm start` | Start the API; with `NODE_ENV=production` it also serves `client/dist` |
 
@@ -73,7 +85,7 @@ Both `.env` files are git-ignored; the `.env.example` files are the templates.
 server/src/
   server.js            entry: connect MongoDB, start HTTP, graceful shutdown
   app.js               middleware (helmet, cors, json), routes, error handling, prod static serving
-  config/              env loading/validation, Mongo connection
+  config/              env loading/validation, Mongo connection (+ built-in local MongoDB for dev)
   models/              User (bcrypt hook), Conversation (embedded messages)
   middleware/          requireAuth (JWT), rate limits, 404 + error handler
   controllers/         auth (register/login/me), chat (list/get/delete/stream)
@@ -144,7 +156,9 @@ Split hosting (frontend on Vercel, API on Render, database on MongoDB Atlas): se
 
 | Symptom | Fix |
 |---|---|
-| `Could not connect to MongoDB` on start | `npm run db:up` (is Docker running?) or check `MONGODB_URI` |
+| `Could not start the built-in local MongoDB` | The first run needs internet to download MongoDB; if it keeps failing, set `MONGODB_URI` to a free Atlas URI |
+| `Could not connect to MongoDB at …` | `MONGODB_URI` is set but unreachable: check it, or clear it to use the built-in database |
+| `Missing required environment variable JWT_SECRET` | Run `npm run setup` (creates `server/.env`) |
 | "Gemini is not configured yet" | Add `GEMINI_API_KEY` to `server/.env` and restart |
 | "The Gemini API key was rejected" | Key is wrong or revoked; create a new one in AI Studio |
 | "The model … was not found" | Change `GEMINI_MODEL` (e.g. `gemini-flash-latest`) |

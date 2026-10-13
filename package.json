@@ -8,18 +8,17 @@
     "client"
   ],
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "dev": "concurrently -k -n server,client -c blue,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
     "dev:server": "npm run dev -w server",
     "dev:client": "npm run dev -w client",
     "build": "npm run build -w client",
-    "start": "npm start -w server",
-    "db:up": "docker compose up -d mongo",
-    "db:down": "docker compose stop mongo"
+    "start": "npm start -w server"
   },
   "devDependencies": {
     "concurrently": "^10.0.6"
   },
   "engines": {
-    "node": ">=20.11.0"
+    "node": ">=22.12.0"
   }
 }
